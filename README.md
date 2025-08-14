@@ -1,2 +1,2 @@
 # Sistemas-embarcados
-Repositório para o projeto feito em aula
+Repositório para os projetos feito em aula
