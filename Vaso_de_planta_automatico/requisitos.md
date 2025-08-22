@@ -1,6 +1,11 @@
 # Vaso de planta automático
 ## Componentes
 - Micro-controlador
+- Censor de solo capacitivo
+- Bomba submersa
+- Módulo de relé
+- Sensor RTC
+- Termistor NTC 5mm 10k
 ## Software
 - preenche
 ## Modelo de IA
@@ -9,3 +14,5 @@
 - preenche
 ## Requisitos do sistema
 - preenche
+## Observações
+- Uso de impressora 3d
