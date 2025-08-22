@@ -14,3 +14,5 @@
 - Precisa ser capaz de medir até 10 quilos;
 - Armazenar e calcular o preço de produtos por quilo;
 - Pedir confirmação para o cliente após verificar os produtos na balança. (por exemplo, quando ele reconhecer uma banana maçã, ele mostrar uma mensagem de confirmação para verificar se realmente é uma banana maçã);
+## Observações
+- Uso de impressora 3d
