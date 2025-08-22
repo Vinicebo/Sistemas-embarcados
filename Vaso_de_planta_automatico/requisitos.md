@@ -13,6 +13,7 @@
 ## Necessidade de aprimoramento de modelo
 - preenche
 ## Requisitos do sistema
-- preenche
+- Sistema deve ser capaz de identificar o nível de umidade do solo
+- preencher
 ## Observações
 - Uso de impressora 3d
