@@ -15,4 +15,4 @@
 - Armazenar e calcular o preço de produtos por quilo;
 - Pedir confirmação para o cliente após verificar os produtos na balança. (por exemplo, quando ele reconhecer uma banana maçã, ele mostrar uma mensagem de confirmação para verificar se realmente é uma banana maçã);
 ## Observações
-- Uso de impressora 3d
+- Uso de impressora 3d: https://www.printables.com/model/374800-load-cell-scale-mount
