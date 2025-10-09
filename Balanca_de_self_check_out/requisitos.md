@@ -1,8 +1,9 @@
 # Requisitos balança de self check out
 ## Componentes
-- Célula De Carga 50 Kg;
-- Módulo de câmera;
-- Micro-controlador;
+- Célula De Carga 10 Kg;
+- Módulo de câmera (ainda não incluído);
+- Micro-controlador: Arduino Mega 2560;
+- Conversor A/D HX711;
 ## Software
 - Google AI Studio
 ## Modelo de IA
