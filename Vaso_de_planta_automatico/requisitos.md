@@ -13,13 +13,11 @@
 - Linguagem de programação: C;
 - IDE: Arduino IDE.
 ## Modelo de IA
-- preencher
-## Necessidade de aprimoramento de modelo
-- preencher
+- Não será utilizado.
 ## Requisitos do sistema
 - Sistema deve ser capaz de identificar o nível de umidade do solo;
 - Sistema deve ser capaz de ativar bomba d'agua quando o solo estiver abaixo de certo nível de umidade;
 - Sistema deve ser capaz de detectar quando recipiente d'agua estiver vazio;
 - Sistema deve notificar o proprietário quando o recipiente d'agua estiver vazio.
 ## Observações
-- Uso de impressora 3d
+- Uso de impressora 3d.
