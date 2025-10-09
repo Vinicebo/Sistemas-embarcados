@@ -5,9 +5,9 @@
 - Micro-controlador: Arduino Mega 2560;
 - Conversor A/D HX711;
 ## Software
-- Google AI Studio
+- Google AI Studio.
 ## Modelo de IA
-- Gemini 2.5 Pro
+- Gemini 2.5 Pro.
 ## Necessidade de aprimoramento de modelo
 - Sim. A IA deverá ser treinada para identificar com precisão frutas e verduras.
 ## Requisitos do sistema
