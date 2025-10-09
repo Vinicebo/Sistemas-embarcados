@@ -5,18 +5,21 @@
 - Sensor ultrassônico: HC-SRO4 (usado provisóriamente no protótipo para monitoramento do recipiente de água);
 - Sensor de temperatura: DHT22 (usado no protótipo para leitura da temperatura ambiente);
 - Potenciômetro (usado no protótipo para simular a temperatura do solo);
-- Bomba submersa (ainda não inclusa)
-- Módulo de relé (ainda não incluso)
-- Sensor RTC (ainda não incluso)
-- Termistor NTC 5mm 10k (ainda não incluso)
+- Bomba submersa (ainda não inclusa);
+- Módulo de relé (ainda não incluso);
+- Sensor RTC (ainda não incluso);
+- Termistor NTC 5mm 10k (ainda não incluso).
 ## Software
-- preenche
+- Linguagem de programação: C;
+- IDE: Arduino IDE.
 ## Modelo de IA
-- preenche
-## Necessidade de aprimoramento de modelo
-- preenche
-## Requisitos do sistema
-- Sistema deve ser capaz de identificar o nível de umidade do solo
 - preencher
+## Necessidade de aprimoramento de modelo
+- preencher
+## Requisitos do sistema
+- Sistema deve ser capaz de identificar o nível de umidade do solo;
+- Sistema deve ser capaz de ativar bomba d'agua quando o solo estiver abaixo de certo nível de umidade;
+- Sistema deve ser capaz de detectar quando recipiente d'agua estiver vazio;
+- Sistema deve notificar o proprietário quando o recipiente d'agua estiver vazio.
 ## Observações
 - Uso de impressora 3d
