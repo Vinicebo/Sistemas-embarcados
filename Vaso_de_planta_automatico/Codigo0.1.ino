@@ -1,7 +1,7 @@
 /*
  * PROTÓTIPO DE IRRIGAÇÃO AUTOMÁTICA (COM Termistor NTC e LM35)
  * Placa: Arduino Mega
- * Sensores: Potenciômetro (Umidade), HC-SR04 (Nível), NTC (Microclima), LM35 (Ambiente)
+ * Sensores: SENSOR CAPACITIVO (Umidade), HC-SR04 (Nível), NTC (Microclima), LM35 (Ambiente)
  * Atuador: Módulo Relé + Bomba 5V
  */
 
@@ -9,9 +9,9 @@
 #include <math.h> // Necessário para a função log() do termistor
 
 // --- Pinos dos Sensores ---
-#define PINO_UMIDADE_SOLO   A0  // Potenciômetro (0-1023)
+#define PINO_UMIDADE_SOLO   A0  // Sensor Capacitivo
 #define PINO_TERMISTOR_NTC  A1  // Termistor NTC 10k (Microclima)
-#define PINO_LM35           A2  // ADICIONADO: Sensor LM35 (Temp. Ambiente)
+#define PINO_LM35           A2  // Sensor LM35 (Temp. Ambiente)
 #define PINO_TRIGER         7   // Sensor Ultrassônico
 #define PINO_ECHO           6   // Sensor Ultrassônico
 
@@ -25,8 +25,18 @@
 #define BOMBA_LIGADA    LOW
 #define BOMBA_DESLIGADA HIGH
 
-// --- Constantes de Calibração ---
-#define LIMITE_SOLO_SECO 512 // (50% de 1023)
+// --- Constantes de Calibração (SENSOR CAPACITIVO) ---
+// -----------------------------------------------------------------
+// ⚠️ VALORES ATUALIZADOS COM A SUA MEDIÇÃO REAL ⚠️
+// -----------------------------------------------------------------
+#define VALOR_SENSOR_SECO 360     // Leitura que você fez no AR
+#define VALOR_SENSOR_MOLHADO 243  // Leitura que você fez na TERRA MOLHADA
+
+// O limite de 50% ("seco") agora é o ponto médio da sua calibração
+// (360 + 243) / 2 = 301.5
+#define LIMITE_SOLO_SECO ( (VALOR_SENSOR_SECO + VALOR_SENSOR_MOLHADO) / 2 )
+
+// --- Outras Constantes ---
 #define LIMITE_DISTANCIA_AGUA_BAIXA 25.0 
 #define TEMPO_IRRIGACAO 5000 // 5 segundos
 
@@ -38,13 +48,12 @@
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Iniciando Sistema de Irrigacao (COM NTC e LM35) - Prototipo Arduino Mega");
+  Serial.println("Iniciando Sistema de Irrigacao (CALIBRADO) - Prototipo Arduino Mega");
 
   // Configura pinos dos sensores
   pinMode(PINO_TRIGER, OUTPUT);
   pinMode(PINO_ECHO, INPUT);
-  // Pinos analógicos (A0, A1, A2) não precisam de pinMode
-
+  
   // Configura pinos de saída
   pinMode(PINO_RELE_BOMBA, OUTPUT);
   pinMode(LED_IRRIGANDO, OUTPUT);
@@ -54,6 +63,8 @@ void setup() {
   // Garante que a bomba comece DESLIGADA
   digitalWrite(PINO_RELE_BOMBA, BOMBA_DESLIGADA);
   Serial.println("Sistema pronto.");
+  Serial.print("Limite de umidade (seco >): ");
+  Serial.println(LIMITE_SOLO_SECO);
 }
 
 void loop() {
@@ -63,10 +74,11 @@ void loop() {
   float tempMicroclima = lerTempMicroclima(); // NTC
   float tempAmbiente = lerTempAmbiente();     // LM35
 
-  // Converte a leitura da umidade (0-1023) para porcentagem (0-100)
-  int umidadePercent = map(valorUmidade, 0, 1023, 0, 100);
+  // Converte a leitura da umidade para porcentagem (0-100)
+  int umidadePercent = map(valorUmidade, VALOR_SENSOR_SECO, VALOR_SENSOR_MOLHADO, 0, 100);
+  umidadePercent = constrain(umidadePercent, 0, 100); // Garante que fique entre 0-100%
 
-  // 2. Imprimir status no Monitor Serial (MODIFICADO)
+  // 2. Imprimir status no Monitor Serial
   Serial.print("Umidade: " + String(umidadePercent) + "%");
   Serial.print(" (Raw: " + String(valorUmidade) + ")");
   Serial.print(" | Nivel Agua (Dist): " + String(distAgua) + " cm");
@@ -74,7 +86,7 @@ void loop() {
   Serial.print(" | T. Ambiente: " + String(tempAmbiente) + " C");   // LM35
   Serial.println();
 
-  // 3. Lógica Principal de Decisão (Sem alteração)
+  // 3. Lógica Principal de Decisão
 
   // --- VERIFICAÇÃO DE SEGURANÇA: Nível da Água ---
   if (distAgua > LIMITE_DISTANCIA_AGUA_BAIXA) {
@@ -91,8 +103,9 @@ void loop() {
     digitalWrite(LED_SISTEMA_OK, HIGH); 
 
     // --- VERIFICAÇÃO DE IRRIGAÇÃO ---
-    if (valorUmidade < LIMITE_SOLO_SECO) {
-      // CONDIÇÃO: Solo está seco (Abaixo de 50%). PRECISA IRRIGAR.
+    // Lógica invertida: "seco" é um valor MAIOR que o limite.
+    if (valorUmidade > LIMITE_SOLO_SECO) {
+      // CONDIÇÃO: Solo está seco. PRECISA IRRIGAR.
       Serial.println("NOTIFICACAO: Solo seco. Ativando bomba por 5 segundos...");
       
       digitalWrite(PINO_RELE_BOMBA, BOMBA_LIGADA); 
@@ -105,7 +118,7 @@ void loop() {
       digitalWrite(LED_IRRIGANDO, LOW);
       
     } else {
-      // CONDIÇÃO: Solo está úmido (Acima de 50%).
+      // CONDIÇÃO: Solo está úmido.
       digitalWrite(PINO_RELE_BOMBA, BOMBA_DESLIGADA); 
       digitalWrite(LED_IRRIGANDO, LOW);
     }
@@ -138,7 +151,6 @@ float lerNivelAgua() {
 }
 
 // --- Função para ler o Termistor NTC (Microclima) ---
-// (Nome da função foi alterado para clareza)
 float lerTempMicroclima() {
   // Lê o valor analógico (0-1023) do divisor de tensão
   int valorADC = analogRead(PINO_TERMISTOR_NTC);
@@ -163,7 +175,7 @@ float lerTempMicroclima() {
   return steinhart;
 }
 
-// --- ADICIONADO: Função para ler o LM35 (Temp. Ambiente) ---
+// --- Função para ler o LM35 (Temp. Ambiente) ---
 float lerTempAmbiente() {
   // Lê o valor analógico (0-1023) do pino A2
   int valorADC = analogRead(PINO_LM35);
