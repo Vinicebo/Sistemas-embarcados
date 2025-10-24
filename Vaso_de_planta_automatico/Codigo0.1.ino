@@ -1,7 +1,8 @@
 /*
- * PROTÓTIPO DE IRRIGAÇÃO AUTOMÁTICA (COM Termistor NTC e LM35)
+ * PROTÓTIPO DE IRRIGAÇÃO AUTOMÁTICA (COM 2 Termistores NTC)
  * Placa: Arduino Mega
- * Sensores: SENSOR CAPACITIVO (Umidade), HC-SR04 (Nível), NTC (Microclima), LM35 (Ambiente)
+ * Sensores: SENSOR CAPACITIVO (Umidade), HC-SR04 (Nível), 
+ * NTC (Microclima em A1), NTC (Ambiente em A2)
  * Atuador: Módulo Relé + Bomba 5V
  */
 
@@ -10,8 +11,8 @@
 
 // --- Pinos dos Sensores ---
 #define PINO_UMIDADE_SOLO   A0  // Sensor Capacitivo
-#define PINO_TERMISTOR_NTC  A1  // Termistor NTC 10k (Microclima)
-#define PINO_LM35           A2  // Sensor LM35 (Temp. Ambiente)
+#define PINO_NTC_MICRO      A1  // MODIFICADO: NTC para Microclima
+#define PINO_NTC_AMBIENTE   A2  // MODIFICADO: NTC para Temp. Ambiente
 #define PINO_TRIGER         7   // Sensor Ultrassônico
 #define PINO_ECHO           6   // Sensor Ultrassônico
 
@@ -26,29 +27,23 @@
 #define BOMBA_DESLIGADA HIGH
 
 // --- Constantes de Calibração (SENSOR CAPACITIVO) ---
-// -----------------------------------------------------------------
-// ⚠️ VALORES ATUALIZADOS COM A SUA MEDIÇÃO REAL ⚠️
-// -----------------------------------------------------------------
-#define VALOR_SENSOR_SECO 360     // Leitura que você fez no AR
-#define VALOR_SENSOR_MOLHADO 243  // Leitura que você fez na TERRA MOLHADA
-
-// O limite de 50% ("seco") agora é o ponto médio da sua calibração
-// (360 + 243) / 2 = 301.5
+#define VALOR_SENSOR_SECO 360     // Calibrado por você
+#define VALOR_SENSOR_MOLHADO 243  // Calibrado por você
 #define LIMITE_SOLO_SECO ( (VALOR_SENSOR_SECO + VALOR_SENSOR_MOLHADO) / 2 )
 
 // --- Outras Constantes ---
 #define LIMITE_DISTANCIA_AGUA_BAIXA 25.0 
 #define TEMPO_IRRIGACAO 5000 // 5 segundos
 
-// --- Constantes do Termistor NTC 10k (Microclima) ---
+// --- Constantes dos Termistores NTC 10k ---
 #define TERMISTOR_NOMINAL 10000.0  // Resistência a 25°C
 #define TEMP_NOMINAL      25.0     // Temp. nominal em Celsius
 #define COEFICIENTE_B     3950.0   // Coeficiente Beta (B)
-#define RESISTOR_DIVISOR  10000.0  // O resistor de 10k que está em série
+#define RESISTOR_DIVISOR  10000.0  // O resistor de 10k que está em série com cada NTC
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Iniciando Sistema de Irrigacao (CALIBRADO) - Prototipo Arduino Mega");
+  Serial.println("Iniciando Sistema de Irrigacao (CALIBRADO, 2 NTCs) - Prototipo Arduino Mega");
 
   // Configura pinos dos sensores
   pinMode(PINO_TRIGER, OUTPUT);
@@ -71,22 +66,23 @@ void loop() {
   // 1. Ler todos os sensores
   int valorUmidade = lerUmidadeSolo();
   float distAgua = lerNivelAgua();
-  float tempMicroclima = lerTempMicroclima(); // NTC
-  float tempAmbiente = lerTempAmbiente();     // LM35
+  // MODIFICADO: Chama a função genérica para ambos os pinos
+  float tempMicroclima = lerTempNTC(PINO_NTC_MICRO);     // NTC em A1
+  float tempAmbiente = lerTempNTC(PINO_NTC_AMBIENTE);   // NTC em A2
 
   // Converte a leitura da umidade para porcentagem (0-100)
   int umidadePercent = map(valorUmidade, VALOR_SENSOR_SECO, VALOR_SENSOR_MOLHADO, 0, 100);
-  umidadePercent = constrain(umidadePercent, 0, 100); // Garante que fique entre 0-100%
+  umidadePercent = constrain(umidadePercent, 0, 100); 
 
-  // 2. Imprimir status no Monitor Serial
+  // 2. Imprimir status no Monitor Serial (MODIFICADO)
   Serial.print("Umidade: " + String(umidadePercent) + "%");
   Serial.print(" (Raw: " + String(valorUmidade) + ")");
   Serial.print(" | Nivel Agua (Dist): " + String(distAgua) + " cm");
-  Serial.print(" | T. Microclima: " + String(tempMicroclima) + " C"); // NTC
-  Serial.print(" | T. Ambiente: " + String(tempAmbiente) + " C");   // LM35
+  Serial.print(" | T. Microclima: " + String(tempMicroclima) + " C"); // NTC A1
+  Serial.print(" | T. Ambiente: " + String(tempAmbiente) + " C");   // NTC A2
   Serial.println();
 
-  // 3. Lógica Principal de Decisão
+  // 3. Lógica Principal de Decisão (Sem alteração)
 
   // --- VERIFICAÇÃO DE SEGURANÇA: Nível da Água ---
   if (distAgua > LIMITE_DISTANCIA_AGUA_BAIXA) {
@@ -134,32 +130,27 @@ int lerUmidadeSolo() {
   return analogRead(PINO_UMIDADE_SOLO);
 }
 
-float lerNivelAgua() {
+float lerNivelAgua() { 
+  digitalWrite(PINO_TRIGER, LOW); delayMicroseconds(2);
+  digitalWrite(PINO_TRIGER, HIGH); delayMicroseconds(10);
   digitalWrite(PINO_TRIGER, LOW);
-  delayMicroseconds(2);
-  digitalWrite(PINO_TRIGER, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(PINO_TRIGER, LOW);
-  
   long duracao = pulseIn(PINO_ECHO, HIGH, 30000); 
   float distancia = (duracao * 0.0343) / 2.0;
-
-  if (distancia == 0 || distancia > 400) { 
-     return 400; 
-  }
+  if (distancia == 0 || distancia > 400) { return 400; }
   return distancia;
 }
 
-// --- Função para ler o Termistor NTC (Microclima) ---
-float lerTempMicroclima() {
-  // Lê o valor analógico (0-1023) do divisor de tensão
-  int valorADC = analogRead(PINO_TERMISTOR_NTC);
+// --- MODIFICADO: Função genérica para ler qualquer Termistor NTC ---
+// Recebe o pino analógico como argumento
+float lerTempNTC(int pino) {
+  // Lê o valor analógico (0-1023) do divisor de tensão no pino especificado
+  int valorADC = analogRead(pino);
   
   // Evita divisão por zero se o sensor estiver desconectado
-  if (valorADC < 1 || valorADC > 1022) return -100; 
+  if (valorADC < 1 || valorADC > 1022) return -100; // Retorna valor inválido
 
   // --- Fórmula do Divisor de Tensão ---
-  // Nosso circuito: 5V -> R10k -> A1 -> NTC -> GND
+  // Nosso circuito: 5V -> R10k -> Pino Analog -> NTC -> GND
   // A fórmula para R_NTC é: R_NTC = R10k * (valorADC / (1023 - valorADC))
   float resistencia = RESISTOR_DIVISOR * ( (float)valorADC / (1023.0 - (float)valorADC) );
   
@@ -175,19 +166,4 @@ float lerTempMicroclima() {
   return steinhart;
 }
 
-// --- Função para ler o LM35 (Temp. Ambiente) ---
-float lerTempAmbiente() {
-  // Lê o valor analógico (0-1023) do pino A2
-  int valorADC = analogRead(PINO_LM35);
-
-  // O LM35 dá 10mV por grau Celsius.
-  // O Arduino lê 0-1023 para 0-5000mV (5V).
-  
-  // Converte a leitura do ADC (0-1023) para Milivolts (0-5000mV)
-  float miliVolts = (valorADC / 1023.0) * 5000.0;
-
-  // Converte Milivolts para Celsius (10mV = 1°C)
-  float tempCelsius = miliVolts / 10.0;
-
-  return tempCelsius;
-}
+// REMOVIDO: A função lerTempAmbiente() não é mais necessária
