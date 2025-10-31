@@ -6,7 +6,7 @@
 - Sensor de temperatura: DHT22 (seria uma atualização para o futuro, caso o projeto vá para frente);
 - Sensor de temperatura: LM35 (usado no protótipo para detecção de temperatura do ambiente);
 - Potenciômetro (usado no protótipo para simular a temperatura do solo);
-- Bomba submersa (ainda não inclusa);
+- Bomba submersa (5V 0.3A);
 - Módulo de relé (ainda não incluso);
 - Sensor RTC (ainda não incluso);
 - Termistor NTC 5mm 10k (ainda não incluso).
