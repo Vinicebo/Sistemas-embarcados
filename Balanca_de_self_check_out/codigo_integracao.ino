@@ -1,40 +1,53 @@
 #include "HX711.h"
 
+// --- Configuração dos Pinos ---
 const int PINO_DOUT = 2;
-const int PINO_SCK  = 3; // O pino SCK tinha um caractere inválido no seu original ( ), corrigido aqui.
+const int PINO_SCK  = 3; // Corrigi o caractere inválido que havia no seu código original
 HX711 balanca;
 
-// Substitua pelos seus valores calibrados
-const float slope = 0.00451;
+// --- Configuração da Calibração (Substitua pelos seus valores) ---
+// Estes valores são cruciais para a precisão!
+const float slope = 0.00451; 
 const float offset = 300.25;
 
-// Parâmetros de filtragem
-const int MEDIAN_COUNT = 5;    // número ímpar para mediana
-const float EMA_ALPHA = 0.5; // 0..1 (maior = responde mais rápido, menor = mais suave)
-const int AVG_READS = 10;      // usado em read_average()
+// --- Parâmetros de Filtragem ---
+const int MEDIAN_COUNT = 5;    // Número ímpar para o filtro de mediana
+const int AVG_READS = 10;      // Leituras para a biblioteca fazer a média (read_average)
+const float EMA_ALPHA = 0.85; // 0..1 (0.5 é um bom equilíbrio. Maior = mais rápido, Menor = mais suave)
 
+// --- Limiar para o Reset Inteligente (em gramas) ---
+// Se o peso filtrado cair abaixo deste valor, ele força o zero imediatamente.
+const float LIMIAR_ZERO_GRAMAS = 5.0; // 5 gramas (ajuste se necessário)
+
+// --- Variáveis Globais de Filtragem ---
 float emaPeso = 0.0;
 bool emaInicializada = false;
-
 long medianBuf[MEDIAN_COUNT];
 
+//=================================================================
+// SETUP
+//=================================================================
 void setup() {
   Serial.begin(9600);
-  while (!Serial) ;
+  while (!Serial) ; // Espera a porta serial conectar
   balanca.begin(PINO_DOUT, PINO_SCK);
 
-  // Serial.println("Balança inicializando..."); // Podemos remover os logs humanos
   delay(500);
-  balanca.tare(); // tara inicial
-  // Serial.println("Tare realizada. Aguardando estabilizacao...");
-  delay(2000);
+  balanca.tare(); // Zera a balança na inicialização
+  delay(2000); // Espera a balança estabilizar após a tara
 }
 
+//=================================================================
+// FUNÇÃO DE LEITURA (Filtro de Mediana)
+//=================================================================
 long getMedianReading() {
+  // 1. Coleta MEDIAN_COUNT leituras (cada leitura já é uma média de AVG_READS)
   for (int i = 0; i < MEDIAN_COUNT; ++i) {
     medianBuf[i] = balanca.read_average(AVG_READS);
-    delay(20);
+    delay(10); // Pequena pausa entre as leituras
   }
+  
+  // 2. Ordena o buffer (insertion sort)
   for (int i = 1; i < MEDIAN_COUNT; ++i) {
     long key = medianBuf[i];
     int j = i - 1;
@@ -44,40 +57,58 @@ long getMedianReading() {
     }
     medianBuf[j+1] = key;
   }
-  return medianBuf[MEDIAN_COUNT/2]; // retorna mediana
+  
+  // 3. Retorna o valor do meio (mediana)
+  return medianBuf[MEDIAN_COUNT/2]; 
 }
 
+//=================================================================
+// LOOP PRINCIPAL
+//=================================================================
 void loop() {
   if (!balanca.is_ready()) {
-    // Serial.println("Balança não encontrada."); // Removemos
     delay(500);
     return;
   }
 
+  // 1. Pega a leitura bruta filtrada (Mediana de Médias)
   long leituraBruta = getMedianReading();
-  float pesoAtual = slope * float(leituraBruta) + offset; // em gramas
+  
+  // 2. Converte para gramas
+  float pesoAtual_gramas = slope * float(leituraBruta) + offset;
 
+  // 3. Aplica o filtro EMA (Média Móvel Exponencial) para suavizar
   if (!emaInicializada) {
-    emaPeso = pesoAtual;
+    emaPeso = pesoAtual_gramas;
     emaInicializada = true;
   } else {
-    emaPeso = EMA_ALPHA * pesoAtual + (1.0 - EMA_ALPHA) * emaPeso;
+    emaPeso = EMA_ALPHA * pesoAtual_gramas + (1.0 - EMA_ALPHA) * emaPeso;
   }
 
-  // Pega o valor estabilizado (em gramas)
-  float exibicao_em_gramas = round(emaPeso * 100.0) / 100.0;
+  // --- 4. IMPLEMENTAÇÃO DO RESET INTELIGENTE ---
+  
+  float peso_final_em_gramas;
 
-  // Garante que o peso não seja negativo (filtro de ruído)
-  if (exibicao_em_gramas < 1.0) { // Ajuste o limiar (ex: 1 grama)
-      exibicao_em_gramas = 0.0;
+  // Se o peso filtrado (emaPeso) cair abaixo do nosso limiar...
+  if (emaPeso < LIMIAR_ZERO_GRAMAS) {
+      // ...força o peso para zero imediatamente.
+      peso_final_em_gramas = 0.0;
+      
+      // E reseta o filtro EMA para que ele não fique "preso" em valores baixos.
+      // Na próxima vez que um peso for adicionado, ele inicializará instantaneamente.
+      emaPeso = 0.0;
+      emaInicializada = false;
+  } else {
+      // Se estiver acima do limiar, apenas usa o valor filtrado
+      peso_final_em_gramas = emaPeso;
   }
+  
+  // 5. Converte o peso final de gramas para quilogramas
+  float peso_em_kg = peso_final_em_gramas / 1000.0;
 
-  // Converte o peso final de gramas para quilogramas
-  float peso_em_kg = exibicao_em_gramas / 1000.0;
+  // 6. Envia APENAS o número do peso em kg pela serial para o Python
+  Serial.println(peso_em_kg, 4); // 4 casas decimais (ex: 0.1525)
 
-  // Envia APENAS o número do peso em kg pela serial
-  // O '4' é o número de casas decimais (ex: 0.1525 kg)
-  Serial.println(peso_em_kg, 4);
-
-  delay(300); // Taxa de atualização (envia ~3x por segundo)
+  // Taxa de atualização (10 leituras por segundo)
+  delay(100); 
 }
