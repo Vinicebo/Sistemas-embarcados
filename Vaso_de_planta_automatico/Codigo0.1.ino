@@ -18,13 +18,13 @@
 
 // --- Pinos dos Atuadores e LEDs ---
 #define PINO_RELE_BOMBA     24  // Módulo Relé (Pino 'IN')
-#define LED_IRRIGANDO       9   // LED Verde
-#define LED_AGUA_BAIXA      10  // LED Vermelho
-#define LED_SISTEMA_OK      8   // LED Azul
+#define LED_IRRIGANDO       30   // LED Verde
+#define LED_AGUA_BAIXA      32  // LED Vermelho
+#define LED_SISTEMA_OK      31   // LED Amarelo
 
 // --- LÓGICA DO RELÉ ---
-#define BOMBA_LIGADA    LOW
-#define BOMBA_DESLIGADA HIGH
+#define BOMBA_LIGADA    HIGH
+#define BOMBA_DESLIGADA LOW
 
 // --- Constantes de Calibração (SENSOR CAPACITIVO) ---
 #define VALOR_SENSOR_SECO 360     // Calibrado por você
