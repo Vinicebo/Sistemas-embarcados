@@ -23,8 +23,8 @@
 #define LED_SISTEMA_OK      31   // LED Amarelo
 
 // --- LÓGICA DO RELÉ ---
-#define BOMBA_LIGADA    HIGH
-#define BOMBA_DESLIGADA LOW
+#define BOMBA_LIGADA    LOW
+#define BOMBA_DESLIGADA HIGH
 
 // --- Constantes de Calibração (SENSOR CAPACITIVO) ---
 #define VALOR_SENSOR_SECO 360     // Calibrado por você
@@ -76,7 +76,6 @@ void loop() {
 
   // 2. Imprimir status no Monitor Serial (MODIFICADO)
   Serial.print("Umidade: " + String(umidadePercent) + "%");
-  Serial.print(" (Raw: " + String(valorUmidade) + ")");
   Serial.print(" | Nivel Agua (Dist): " + String(distAgua) + " cm");
   Serial.print(" | T. Microclima: " + String(tempMicroclima) + " C"); // NTC A1
   Serial.print(" | T. Ambiente: " + String(tempAmbiente) + " C");   // NTC A2
