@@ -29,7 +29,7 @@ O desenvolvimento deste projeto exigiu diversas customizações no software base
 
 - Implementação de um script de inferência em Python que recebe a imagem capturada, executa a detecção e retorna a classe identificada ao microcontrolador.
 
-📷 4. Automação do Fluxo de Captura de Imagens
+## 📷 4. Automação do Fluxo de Captura de Imagens
 
 - Desenvolvimento de uma rotina que dispara automaticamente a captura da imagem sempre que o microcontrolador detecta uma nova variação de peso significativa.
 
