@@ -111,4 +111,7 @@ https://github.com/user-attachments/assets/e969aca2-2922-4cfa-acbf-6861fbd4e168
 
 Este projeto foi desenvolvido ao longo de 6 meses como parte da disciplina de Projeto de Sistemas Embarcados no IBMEC-RJ.
 Embora este README ofereça uma visão geral da jornada de desenvolvimento e de seus desafios, dados mais específicos como a metodologia científica, análises de precisão e os testes de acurácia da IA podem ser consultados no nosso artigo completo.
+
+[Leia o artigo científico completo aqui](Balanca_de_self_check_out/SBrT2026_An_Intelligent_Scale_Integrating_Computer_Vision_and_AI_for_Fruit_and_Vegetable_G5__IBM3119_2025_2_.pdf)
+
 Agradeço pelo interesse em nosso projeto. Se tiver qualquer dúvida, sinta-se a vontade para abrir uma Issue e conversarmos.
